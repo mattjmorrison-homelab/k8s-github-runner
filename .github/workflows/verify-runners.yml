@@ -3,6 +3,7 @@ name: Verify runners
 on:
   push:
     branches: [main]
+  workflow_dispatch: {}
 
 jobs:
   k8s-amd64:
