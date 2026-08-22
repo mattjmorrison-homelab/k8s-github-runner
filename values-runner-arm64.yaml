@@ -1,0 +1,20 @@
+githubConfigUrl: https://github.com/mattjmorrison-homelab
+githubConfigSecret: github-runner-app-credentials
+
+runnerScaleSetName: k8s-arm64
+
+minRunners: 0
+maxRunners: 3
+
+template:
+  spec:
+    nodeSelector:
+      kubernetes.io/arch: arm64
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: pi
+        effect: NoSchedule
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:latest

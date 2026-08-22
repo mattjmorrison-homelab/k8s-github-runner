@@ -1,0 +1,4 @@
+# gha-runner-scale-set-controller — cluster-wide, one release, manages the
+# RunnerScaleSet CRDs that the two runner releases (values-runner-amd64.yaml,
+# values-runner-arm64.yaml) create. Defaults are sufficient; nothing
+# homelab-specific needed here.

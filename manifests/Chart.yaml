@@ -1,0 +1,4 @@
+apiVersion: v2
+name: k8s-github-runner-config
+description: Namespace, ServiceAccount, and OpenBao secret wiring for the ARC runner releases
+version: 0.1.0
