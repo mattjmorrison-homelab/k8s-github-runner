@@ -1,6 +1,16 @@
 githubConfigUrl: https://github.com/mattjmorrison-homelab
 githubConfigSecret: github-runner-app-credentials
 
+# The chart auto-discovers the controller's ServiceAccount via a Helm
+# lookup() against a live Deployment label -- unreliable under ArgoCD,
+# which renders manifests through its own repo-server rather than a
+# direct `helm install`. Set explicitly instead; matches the real
+# ServiceAccount name/namespace the k8s-github-runner-controller release
+# actually creates.
+controllerServiceAccount:
+  name: k8s-github-runner-controller-gha-rs-controller
+  namespace: github-runner
+
 runnerScaleSetName: k8s-amd64
 
 minRunners: 0
