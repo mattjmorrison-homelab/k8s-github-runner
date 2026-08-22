@@ -1,0 +1,22 @@
+name: Verify runners
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  verify-nix:
+    runs-on: k8s-amd64
+    steps:
+      - uses: actions/checkout@v4
+      - run: uname -a
+      - run: curl -sSf --max-time 10 https://github.com > /dev/null
+      - run: echo "k8s-amd64 runner OK"
+
+  verify-pi:
+    runs-on: k8s-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - run: uname -a
+      - run: curl -sSf --max-time 10 https://github.com > /dev/null
+      - run: echo "k8s-arm64 runner OK"
