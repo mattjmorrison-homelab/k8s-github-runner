@@ -9,7 +9,7 @@ jobs:
   k8s-amd64:
     runs-on: k8s-amd64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: uname -a
       - run: curl -sSf --max-time 10 https://github.com > /dev/null
       - run: echo "k8s-amd64 runner OK"
@@ -17,7 +17,7 @@ jobs:
   k8s-arm64:
     runs-on: k8s-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: uname -a
       - run: curl -sSf --max-time 10 https://github.com > /dev/null
       - run: echo "k8s-arm64 runner OK"
