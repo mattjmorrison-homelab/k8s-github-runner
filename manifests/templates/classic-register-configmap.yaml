@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: classic-register-and-run
+  namespace: github-runner
+data:
+  run.sh: |
+    #!/bin/bash
+    # Isolating whether classic (non-JIT) registration via an ARC-managed
+    # pod works with a PAT, after the same approach failed with GitHub App
+    # credentials ("signature is not valid" at broker session creation,
+    # after registration itself succeeded). ARC still owns pod
+    # creation/scheduling/cleanup; only the runner's own startup
+    # registration path is overridden here.
+    set -euo pipefail
+
+    ORG="mattjmorrison-homelab"
+    PAT=$(cat /creds/github_token)
+    : "${RUNNER_LABEL:?RUNNER_LABEL env var required}"
+
+    regtok=$(curl -sf -X POST \
+      -H "Authorization: token ${PAT}" \
+      -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/orgs/${ORG}/actions/runners/registration-token" | jq -r .token)
+
+    cd /home/runner
+    ./config.sh --url "https://github.com/${ORG}" --token "${regtok}" \
+      --name "${HOSTNAME}" --labels "${RUNNER_LABEL}" --unattended --replace --ephemeral --work _work
+    ./run.sh
