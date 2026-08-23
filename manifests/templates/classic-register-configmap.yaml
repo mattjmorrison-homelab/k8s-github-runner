@@ -46,5 +46,5 @@ data:
 
     cd /home/runner
     ./config.sh --url "https://github.com/${ORG}" --token "${regtok}" \
-      --name "${HOSTNAME}" --labels "${RUNNER_LABEL}" --unattended --ephemeral --work _work
+      --name "${HOSTNAME}" --labels "${RUNNER_LABEL}" --unattended --replace --ephemeral --work _work
     ./run.sh
