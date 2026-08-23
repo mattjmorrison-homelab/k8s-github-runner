@@ -16,8 +16,9 @@ data:
     # creation/scheduling/cleanup exactly as before.
     set -euo pipefail
 
-    echo "pod clock (local):  $(date -u)"
-    echo "real time (github): $(curl -sI https://api.github.com | grep -i '^date:' | tr -d '\r')"
+    echo "before curl (local): $(date -u +%s.%N)"
+    echo "github date header:  $(curl -sI https://api.github.com | grep -i '^date:' | tr -d '\r')"
+    echo "after curl (local):  $(date -u +%s.%N)"
 
     ORG="mattjmorrison-homelab"
     APP_ID_FILE="/creds/github_app_id"
