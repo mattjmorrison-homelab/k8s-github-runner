@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: runner-register-and-run
+  namespace: github-runner
+data:
+  run.sh: |
+    #!/bin/bash
+    # Replaces ARC's gha-runner-scale-set entirely. ARC's JIT registration
+    # flow (--jitconfig) failed 100% of the time in this cluster, and
+    # every attempt to work around it while still using ARC's own pod
+    # management also failed with the same broker OAuth signature error,
+    # regardless of credential source (GitHub App or PAT), chart version,
+    # or whether the JIT env var ARC injects was unset. The one thing that
+    # has ever worked, in every test, is classic token-based registration
+    # (config.sh --token) run outside of ARC's control entirely.
+    #
+    # This runs as a Deployment instead: --ephemeral makes run.sh exit
+    # after one job, and Kubernetes' own container-restart-on-exit brings
+    # it back for the next one -- fresh registration each cycle, no
+    # custom listener/poller needed.
+    set -euo pipefail
+
+    ORG="mattjmorrison-homelab"
+    APP_ID_FILE="/creds/github_app_id"
+    INSTALL_ID_FILE="/creds/github_app_installation_id"
+    PRIVATE_KEY_FILE="/creds/github_app_private_key"
+    : "${RUNNER_LABEL:?RUNNER_LABEL env var required}"
+
+    cd /home/runner
+    rm -rf _work .runner .credentials .credentials_rsaparams .service 2>/dev/null || true
+
+    b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
+
+    app_id=$(cat "$APP_ID_FILE")
+    install_id=$(cat "$INSTALL_ID_FILE")
+    now=$(date +%s)
+    header='{"alg":"RS256","typ":"JWT"}'
+    payload="{\"iat\":$((now - 60)),\"exp\":$((now + 540)),\"iss\":\"${app_id}\"}"
+    h=$(printf '%s' "$header" | b64url)
+    p=$(printf '%s' "$payload" | b64url)
+    sig=$(printf '%s.%s' "$h" "$p" | openssl dgst -sha256 -sign "$PRIVATE_KEY_FILE" | b64url)
+    jwt="${h}.${p}.${sig}"
+
+    itok=$(curl -sf -X POST \
+      -H "Authorization: Bearer ${jwt}" \
+      -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/app/installations/${install_id}/access_tokens" | jq -r .token)
+
+    regtok=$(curl -sf -X POST \
+      -H "Authorization: token ${itok}" \
+      -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/orgs/${ORG}/actions/runners/registration-token" | jq -r .token)
+
+    ./config.sh --url "https://github.com/${ORG}" --token "${regtok}" \
+      --name "${HOSTNAME}" --labels "${RUNNER_LABEL}" --unattended --replace --ephemeral --work _work
+    ./run.sh

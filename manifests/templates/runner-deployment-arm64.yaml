@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-arm64-runner
+  namespace: github-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-arm64-runner
+  template:
+    metadata:
+      labels:
+        app: k8s-arm64-runner
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: pi
+          effect: NoSchedule
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner@sha256:0cfdcc701ce933c6d243c6b0b2da767366dc9f2e99961d4c3754b0b78084cdda
+          env:
+            - name: ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT
+              value: "1"
+            - name: RUNNER_LABEL
+              value: k8s-arm64
+          command: ["/bin/bash", "/scripts/run.sh"]
+          volumeMounts:
+            - name: register-script
+              mountPath: /scripts
+            - name: github-app-creds
+              mountPath: /creds
+              readOnly: true
+      volumes:
+        - name: register-script
+          configMap:
+            name: runner-register-and-run
+            defaultMode: 0755
+        - name: github-app-creds
+          secret:
+            secretName: github-runner-app-credentials
