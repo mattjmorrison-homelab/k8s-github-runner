@@ -26,3 +26,20 @@ template:
         env:
           - name: ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT
             value: "1"
+          - name: RUNNER_LABEL
+            value: k8s-amd64
+        command: ["/bin/bash", "/scripts/run.sh"]
+        volumeMounts:
+          - name: classic-register-script
+            mountPath: /scripts
+          - name: github-app-creds
+            mountPath: /creds
+            readOnly: true
+    volumes:
+      - name: classic-register-script
+        configMap:
+          name: classic-register-and-run
+          defaultMode: 0755
+      - name: github-app-creds
+        secret:
+          secretName: github-runner-app-credentials

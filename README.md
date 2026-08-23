@@ -86,17 +86,25 @@ every time. Ruled out as causes: network/DNS/TLS reachability, MTU,
 node clock skew, node resource pressure, stale job leases,
 `securityContext` differences, and the `:latest` image tag.
 
-Root cause found: `homelab-apps`' Application sources pinned
-`targetRevision: "*"` for both the controller and scale-set charts —
-always floating to whatever's newest, never actually pinned. That had
-drifted onto `0.14.x`, which includes a rewrite of the internal client
-library both the controller and listener use for JIT operations
-("Moving to scaleset client for the controller", "Switch client to
-scaleset library for the listener", plus a JIT-error-handling change,
-all landing in `0.14.0`). Pinned `homelab-apps`' `targetRevision` to
-`0.13.1` (the version immediately prior) for all three chart sources
-instead of `"*"`, both to test whether that's what broke JIT and to
-stop future drift from silently landing on an untested version again.
+`homelab-apps`' Application sources also had `targetRevision: "*"` for
+both the controller and scale-set charts — always floating to
+whatever's newest, never actually pinned. Fixed that regardless (now
+pinned to `0.13.1`), but confirmed via a controlled re-test that the
+chart version itself isn't the cause: JIT registration fails
+identically on `0.13.1` as it did on `0.14.2`.
+
+Fix: `manifests/templates/classic-register-configmap.yaml` overrides
+the runner container's default entrypoint (`command` in
+`values-runner-amd64.yaml`/`values-runner-arm64.yaml`) so it ignores
+the JIT config ARC injects and instead does classic token-based
+registration — using the same GitHub App credentials ARC's controller
+already has (mounted directly into the runner pod), `--ephemeral` so
+it still self-deregisters after one job. ARC still owns pod creation,
+scheduling, and cleanup; only the runner's own startup registration
+path changed. One known open risk: ARC pre-allocates a runner ID via
+JIT before the pod starts and may log a harmless mismatch/warning when
+it tries to clean up that ID, since the pod registers under a
+different one — worth watching for after this deploys.
 
 ## Not done yet
 

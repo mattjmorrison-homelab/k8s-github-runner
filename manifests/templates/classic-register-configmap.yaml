@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: classic-register-and-run
+  namespace: github-runner
+data:
+  run.sh: |
+    #!/bin/bash
+    # ARC's own JIT registration path (--jitconfig) fails 100% of the time in
+    # this cluster: the runner registers, the pod starts, and the process
+    # exits cleanly within ~2s without ever picking up its assigned job,
+    # leaving it stuck queued. Classic token-based registration (this script)
+    # does not have that problem -- confirmed via repeated side-by-side
+    # testing. This overrides the runner container's default entrypoint to
+    # use classic registration instead, while still letting ARC manage pod
+    # creation/scheduling/cleanup exactly as before.
+    set -euo pipefail
+
+    ORG="mattjmorrison-homelab"
+    APP_ID_FILE="/creds/github_app_id"
+    INSTALL_ID_FILE="/creds/github_app_installation_id"
+    PRIVATE_KEY_FILE="/creds/github_app_private_key"
+    : "${RUNNER_LABEL:?RUNNER_LABEL env var required}"
+
+    b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
+
+    app_id=$(cat "$APP_ID_FILE")
+    install_id=$(cat "$INSTALL_ID_FILE")
+    now=$(date +%s)
+    header='{"alg":"RS256","typ":"JWT"}'
+    payload="{\"iat\":$((now - 60)),\"exp\":$((now + 540)),\"iss\":\"${app_id}\"}"
+    h=$(printf '%s' "$header" | b64url)
+    p=$(printf '%s' "$payload" | b64url)
+    sig=$(printf '%s.%s' "$h" "$p" | openssl dgst -sha256 -sign "$PRIVATE_KEY_FILE" | b64url)
+    jwt="${h}.${p}.${sig}"
+
+    itok=$(curl -sf -X POST \
+      -H "Authorization: Bearer ${jwt}" \
+      -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/app/installations/${install_id}/access_tokens" | jq -r .token)
+
+    regtok=$(curl -sf -X POST \
+      -H "Authorization: token ${itok}" \
+      -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/orgs/${ORG}/actions/runners/registration-token" | jq -r .token)
+
+    cd /home/runner
+    ./config.sh --url "https://github.com/${ORG}" --token "${regtok}" \
+      --name "${HOSTNAME}" --labels "${RUNNER_LABEL}" --unattended --ephemeral --work _work
+    ./run.sh
