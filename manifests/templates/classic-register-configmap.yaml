@@ -26,4 +26,11 @@ data:
     cd /home/runner
     ./config.sh --url "https://github.com/${ORG}" --token "${regtok}" \
       --name "${HOSTNAME}" --labels "${RUNNER_LABEL}" --unattended --replace --ephemeral --work _work
+
+    # ARC still injects ACTIONS_RUNNER_INPUT_JITCONFIG regardless of this
+    # command override -- the runner picks it up automatically and it
+    # overwrites the credentials config.sh just registered above, signing
+    # with a key GitHub never associated with this registration. Unset it
+    # so run.sh actually uses what config.sh just set up.
+    unset ACTIONS_RUNNER_INPUT_JITCONFIG
     ./run.sh
