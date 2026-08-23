@@ -22,7 +22,7 @@ template:
       kubernetes.io/arch: amd64
     containers:
       - name: runner
-        image: ghcr.io/actions/actions-runner:latest
+        image: ghcr.io/actions/actions-runner@sha256:0cfdcc701ce933c6d243c6b0b2da767366dc9f2e99961d4c3754b0b78084cdda
         env:
           - name: ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT
             value: "1"
