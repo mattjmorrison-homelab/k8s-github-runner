@@ -1,5 +1,5 @@
 githubConfigUrl: https://github.com/mattjmorrison-homelab
-githubConfigSecret: github-runner-app-credentials
+githubConfigSecret: github-runner-pat-credentials
 
 # The chart auto-discovers the controller's ServiceAccount via a Helm
 # lookup() against a live Deployment label -- unreliable under ArgoCD,
@@ -31,20 +31,3 @@ template:
         env:
           - name: ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT
             value: "1"
-          - name: RUNNER_LABEL
-            value: k8s-arm64
-        command: ["/bin/bash", "/scripts/run.sh"]
-        volumeMounts:
-          - name: classic-register-script
-            mountPath: /scripts
-          - name: github-app-creds
-            mountPath: /creds
-            readOnly: true
-    volumes:
-      - name: classic-register-script
-        configMap:
-          name: classic-register-and-run
-          defaultMode: 0755
-      - name: github-app-creds
-        secret:
-          secretName: github-runner-app-credentials
