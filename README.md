@@ -73,6 +73,31 @@ Synced into a Kubernetes Secret named `github-runner-app-credentials` via
 the usual `SecretStore`/`ExternalSecret` pair (not built yet — needs a
 Kubernetes auth role in OpenBao the same as every other app here).
 
+## Ephemeral runners via ARC were broken — pinned to a known-good version
+
+ARC's ephemeral runner flow (JIT config, `--jitconfig`) reliably failed
+100% of the time in this cluster: the controller registers a runner,
+the pod starts, and the runner process exits cleanly within ~2 seconds
+without ever picking up the job it was created for — leaving the job
+stuck `queued` forever. Confirmed via a side-by-side test: a runner
+registered the *classic* way (`config.sh --token ...`, no JIT) on the
+exact same node/image picked up and completed a real job in 3 seconds,
+every time. Ruled out as causes: network/DNS/TLS reachability, MTU,
+node clock skew, node resource pressure, stale job leases,
+`securityContext` differences, and the `:latest` image tag.
+
+Root cause found: `homelab-apps`' Application sources pinned
+`targetRevision: "*"` for both the controller and scale-set charts —
+always floating to whatever's newest, never actually pinned. That had
+drifted onto `0.14.x`, which includes a rewrite of the internal client
+library both the controller and listener use for JIT operations
+("Moving to scaleset client for the controller", "Switch client to
+scaleset library for the listener", plus a JIT-error-handling change,
+all landing in `0.14.0`). Pinned `homelab-apps`' `targetRevision` to
+`0.13.1` (the version immediately prior) for all three chart sources
+instead of `"*"`, both to test whether that's what broke JIT and to
+stop future drift from silently landing on an untested version again.
+
 ## Not done yet
 
 - The `SecretStore`/`ExternalSecret`/`ServiceAccount` manifests for the
