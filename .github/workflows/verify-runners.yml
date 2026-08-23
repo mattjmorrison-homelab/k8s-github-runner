@@ -21,3 +21,9 @@ jobs:
       - run: uname -a
       - run: curl -sSf --max-time 10 https://github.com > /dev/null
       - run: echo "k8s-arm64 runner OK"
+
+  manual-debug:
+    runs-on: manual-debug
+    steps:
+      - run: uname -a
+      - run: echo "manual-debug runner OK"
