@@ -16,6 +16,9 @@ data:
     # creation/scheduling/cleanup exactly as before.
     set -euo pipefail
 
+    echo "pod clock (local):  $(date -u)"
+    echo "real time (github): $(curl -sI https://api.github.com | grep -i '^date:' | tr -d '\r')"
+
     ORG="mattjmorrison-homelab"
     APP_ID_FILE="/creds/github_app_id"
     INSTALL_ID_FILE="/creds/github_app_installation_id"
