@@ -4,7 +4,7 @@ metadata:
   name: k8s-amd64-runner
   namespace: github-runner
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: k8s-amd64-runner
