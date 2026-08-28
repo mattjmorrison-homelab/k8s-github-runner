@@ -1,0 +1,54 @@
+# A third, deliberately separate runner pool, isolated onto its own
+# ServiceAccount (pi-provision-runner) instead of the shared
+# github-runner-workload every other repo's CI uses. OpenBao's Kubernetes
+# auth only checks which ServiceAccount a login's JWT belongs to, not which
+# repo's workflow sent it -- so pi-provision's OpenBao role (which can read
+# every Pi's SSH key and the k3s join token) needs a ServiceAccount nothing
+# else authenticates as, or that isolation would just be convention. Same
+# reasoning extends this pool's RBAC (see pi-provision-node-taint-rbac.yaml)
+# to only this ServiceAccount, not the shared one.
+#
+# Single replica, unlike the amd64/arm64 pools' 3 -- this repo's CI is rare
+# (a daily scheduled check plus occasional adhoc dispatches), not the
+# constant throughput the shared pools serve across every other repo.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-pi-provision-runner
+  namespace: github-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-pi-provision-runner
+  template:
+    metadata:
+      labels:
+        app: k8s-pi-provision-runner
+    spec:
+      serviceAccountName: pi-provision-runner
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner@sha256:0cfdcc701ce933c6d243c6b0b2da767366dc9f2e99961d4c3754b0b78084cdda
+          env:
+            - name: ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT
+              value: "1"
+            - name: RUNNER_LABEL
+              value: k8s-pi-provision
+          command: ["/bin/bash", "/scripts/run.sh"]
+          volumeMounts:
+            - name: register-script
+              mountPath: /scripts
+            - name: github-app-creds
+              mountPath: /creds
+              readOnly: true
+      volumes:
+        - name: register-script
+          configMap:
+            name: runner-register-and-run
+            defaultMode: 0755
+        - name: github-app-creds
+          secret:
+            secretName: github-runner-app-credentials

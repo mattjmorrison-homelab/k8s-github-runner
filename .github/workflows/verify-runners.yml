@@ -21,3 +21,11 @@ jobs:
       - run: uname -a
       - run: curl -sSf --max-time 10 https://github.com > /dev/null
       - run: echo "k8s-arm64 runner OK"
+
+  k8s-pi-provision:
+    runs-on: k8s-pi-provision
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - run: uname -a
+      - run: curl -sSf --max-time 10 https://github.com > /dev/null
+      - run: echo "k8s-pi-provision runner OK"
