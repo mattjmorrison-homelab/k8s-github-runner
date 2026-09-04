@@ -1,0 +1,26 @@
+# Lets pi-provision-runner's CI run taint-existing-nodes.sh in-cluster
+# (get/patch on nodes -- taints are set via a patch to the node's spec, k8s
+# has no separate "taint" verb). Scoped to pi-provision-runner specifically,
+# not github-runner-workload, so this doesn't grant node-patch access to
+# every other repo's CI too.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pi-provision-node-taint
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pi-provision-node-taint
+subjects:
+  - kind: ServiceAccount
+    name: pi-provision-runner
+    namespace: github-runner
+roleRef:
+  kind: ClusterRole
+  name: pi-provision-node-taint
+  apiGroup: rbac.authorization.k8s.io
