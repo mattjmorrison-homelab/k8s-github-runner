@@ -9,6 +9,7 @@ jobs:
     runs-on: k8s-amd64
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: mattjmorrison-homelab/actions-helm@334a61d6bcc3a64cd014336c633a35f54443fb00
+      - uses: mattjmorrison-homelab/actions-helm@152fb694be9a3b41bf6792f032008d42bf4d2a5b
         with:
           namespace: github-runner
+          service-account: github-runner-ci
