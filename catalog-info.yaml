@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-github-runner
+  annotations:
+    github.com/project-slug: mattjmorrison-homelab/k8s-github-runner
+spec:
+  type: ci-runner
+  owner: mattjmorrison-homelab
+  system: github-runner
