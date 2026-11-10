@@ -3,4 +3,4 @@
 # a plain kubectl restart isn't used here -- every change to what's
 # running in the cluster goes through a git commit ArgoCD syncs, never
 # a direct cluster command.
-restartTrigger: "2026-11-10-recover-stuck-amd64-runners"
+restartTrigger: "2026-11-10-recover-stuck-amd64-runners-2"
