@@ -12,6 +12,8 @@ spec:
     metadata:
       labels:
         app: k8s-amd64-runner
+      annotations:
+        restart-trigger: {{ .Values.restartTrigger | quote }}
     spec:
       serviceAccountName: github-runner-workload
       nodeSelector:
